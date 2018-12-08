@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace RandomPhoto
+namespace RandomPhotoChooser
 {
     class Program
     {
@@ -25,20 +25,34 @@ namespace RandomPhoto
                     return ShowUsage();
                 string dir = args[0];
                 if (!Directory.Exists(dir))
-                    return ShowUsage("Directory {0} doesn't exists", dir);
+                    return ShowUsage("Directory {0} doesn't exists.", dir);
+                string outputFile = args[2];
+                string outputFileExt = Path.GetExtension(outputFile).ToLower();
+                if (!outputFileExt.Equals(".jpg"))
+                    return ShowUsage("Output file format must be jpg.");
 
-                string extensions = args[1].ToLower();
+                string extensions = args[1].ToLower().Replace("*", "");
                 m_Random = new Random(DateTime.Now.Millisecond);
                 string file = DrawFile(dir, extensions.Split('|').ToList());
                 if (string.IsNullOrEmpty(file))
-                    return ShowUsage("Could't find file with extension {0} in {1}", extensions, dir);
-                //TODO Add conversion from source format to destination
-                File.Copy(file, args[2], true);
+                    return ShowUsage("Could't find file with extension {0} in {1}.", extensions, dir);
+                string fileExt = Path.GetExtension(file).ToLower();
+                if (outputFileExt.Equals(fileExt))
+                {
+                    Console.WriteLine("Copying file {0} to {1} ...", file, outputFile);
+                    File.Copy(file, outputFile, true);
+                }
+                else
+                {
+                    Console.WriteLine("Converting file {0} to {1} ...", file, outputFile);
+                    Image2JPG.Convert(file, outputFile);
+                }
+                Console.WriteLine("Done.");
                 return 0;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: {0}", ex.Message);
+                Console.WriteLine("Error: {0}.", ex.Message);
                 return 1;
             }
             finally
@@ -89,11 +103,14 @@ namespace RandomPhoto
         static int ShowUsage(string errorMessage, params string[] args)
         {
             if (!string.IsNullOrEmpty(errorMessage))
+            {
                 Console.WriteLine(string.Format(errorMessage, args));
+                Console.WriteLine(Environment.NewLine);
+            }
             Console.WriteLine("Usage: {0}.exe <photos_directory> <extensions_filter> <destination_file>", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
             Console.WriteLine("Options:");
             Console.WriteLine("\t<photos_directory>  - path to directory with photos (C:\\Photos)");
-            Console.WriteLine("\t<extensions_filter> - file extension filter (*.jpg|*.png)");
+            Console.WriteLine("\t<extensions_filter> - file extension filter (.jpg|.png)");
             Console.WriteLine("\t<destination_file>  - path to destintion file (D:\\Photos\\file.jpg)");
             return 1;
         }
