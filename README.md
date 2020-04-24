@@ -1,2 +1,2 @@
 # RandomPhotoChooser
-Select random file with specific extension within directories
+Chooses random file with specific extension within directories
